@@ -1,0 +1,15 @@
+services:
+  zeta4g:
+    image: zeta4lab/zeta4g-pro:latest
+    container_name: zeta4g-pro
+    command: ["start", "--no-auth"]
+    ports:
+      - "9044:9044"   # HTTP
+      - "9045:9045"   # Bolt
+      - "9043:9043"   # HTTPS
+    volumes:
+      - zeta4g-data:/data
+    restart: unless-stopped
+
+volumes:
+  zeta4g-data:

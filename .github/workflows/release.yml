@@ -1,0 +1,215 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 2.7.5)'
+        required: true
+        type: string
+      source_ref:
+        description: 'Source branch or tag to build from (e.g. main, v2.7.5)'
+        required: false
+        default: 'main'
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  CARGO_TERM_COLOR: always
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+            platform_suffix: darwin-aarch64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            platform_suffix: linux-x86_64
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VERSION: ${{ inputs.version }}
+      PLATFORM: ${{ matrix.platform_suffix }}
+
+    steps:
+      - name: Checkout source (private repo)
+        uses: actions/checkout@v4
+        with:
+          repository: zeta9044/zeta4g
+          ref: ${{ inputs.source_ref }}
+          token: ${{ secrets.ZETA4G_PAT }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libssl-dev protobuf-compiler
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install protobuf
+
+      - name: Cache cargo registry & build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/pro
+          key: ${{ matrix.target }}-cargo-pro-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ matrix.target }}-cargo-pro-
+
+      - name: Build Pro Edition
+        run: |
+          cargo build -p zeta4g-pro --release --target-dir target/pro
+
+      - name: Package binaries
+        run: |
+          ARTIFACT="zeta4g-pro-${VERSION}-${PLATFORM}"
+          mkdir -p "dist/${ARTIFACT}"
+          for bin in zeta4gd zeta4gs zeta4g-admin zeta4gctl zeta4g-onto zeta4g-index zeta4g-rag zeta4g-model zeta4g-vector zeta4g-fulltext; do
+            cp "target/pro/release/${bin}" "dist/${ARTIFACT}/"
+          done
+          cd dist
+          tar czf "${ARTIFACT}.tar.gz" "${ARTIFACT}/"
+          shasum -a 256 "${ARTIFACT}.tar.gz" > "${ARTIFACT}.tar.gz.sha256"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zeta4g-pro-${{ env.VERSION }}-${{ env.PLATFORM }}
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release repo
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f | sort
+
+      - name: Create GitHub Release
+        env:
+          VERSION: ${{ inputs.version }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: Zeta4G Pro v${{ inputs.version }}
+          body: |
+            ## Zeta4G Pro Edition v${{ inputs.version }}
+
+            GraphRAG database server with vector search, RAG pipeline, and LLM integration.
+
+            ### Downloads
+
+            | Platform | Architecture | File |
+            |----------|-------------|------|
+            | macOS | Apple Silicon (aarch64) | `zeta4g-pro-${{ inputs.version }}-darwin-aarch64.tar.gz` |
+            | Linux | x86_64 | `zeta4g-pro-${{ inputs.version }}-linux-x86_64.tar.gz` |
+
+            ### Docker
+
+            ```bash
+            docker pull zeta4lab/zeta4g-pro:${{ inputs.version }}
+            # or
+            docker pull ghcr.io/zeta9044/zeta4g-pro:${{ inputs.version }}
+            ```
+
+            ### Verify checksum
+            ```bash
+            shasum -a 256 -c zeta4g-pro-*.sha256
+            ```
+
+            ### Quick Start
+
+            ```bash
+            tar xzf zeta4g-pro-<version>-<platform>.tar.gz
+            cd zeta4g-pro-<version>-<platform>
+
+            ./zeta4gctl init --clean -y
+            ./zeta4gctl start --no-auth
+            ./zeta4gs "RETURN 'Hello, Zeta4G Pro!' AS message"
+            ```
+
+            See [README](https://github.com/zeta9044/zeta4g-pro#readme) for full documentation.
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.sha256
+          draft: false
+          prerelease: false
+
+  docker:
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release repo
+        uses: actions/checkout@v4
+
+      - name: Download Linux x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: zeta4g-pro-${{ inputs.version }}-linux-x86_64
+          path: artifacts/
+
+      - name: Prepare binaries for Docker build
+        run: |
+          mkdir -p binaries
+          cd artifacts
+          tar xzf *.tar.gz
+          cp zeta4g-pro-*/zeta4g* ../binaries/
+          chmod +x ../binaries/*
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            zeta4lab/zeta4g-pro:${{ inputs.version }}
+            zeta4lab/zeta4g-pro:latest
+            ghcr.io/zeta9044/zeta4g-pro:${{ inputs.version }}
+            ghcr.io/zeta9044/zeta4g-pro:latest
+          labels: |
+            org.opencontainers.image.version=${{ inputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
