@@ -4,10 +4,13 @@ set -e
 export ZETA4G_HOME="${ZETA4G_HOME:-/data}"
 
 # Initialize database on first run
-if [ ! -d "${ZETA4G_HOME}/.zeta4g" ]; then
+if [ ! -d "${ZETA4G_HOME}/databases" ]; then
   echo "==> Initializing Zeta4G database at ${ZETA4G_HOME}..."
   zeta4gctl --home "${ZETA4G_HOME}" init -y
 fi
+
+# Clean stale PID file from previous container run
+rm -f "${ZETA4G_HOME}/zeta4g.pid"
 
 case "$1" in
   start)
