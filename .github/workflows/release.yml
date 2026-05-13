@@ -203,6 +203,11 @@ jobs:
           cp zeta4g-pro-*/zeta4g* ../binaries-arm64/
           chmod +x ../binaries-arm64/*
 
+      - name: Smoke test amd64 Docker image
+        run: |
+          docker build --build-arg BINARIES_DIR=binaries-amd64 -t zeta4g-pro:smoke .
+          docker run --rm --entrypoint zeta4gctl zeta4g-pro:smoke --version
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
