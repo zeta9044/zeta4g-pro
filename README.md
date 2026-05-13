@@ -12,6 +12,7 @@ Base Edition의 모든 기능에 더해 벡터 인덱스(HNSW), 그래프 임베
 |----------|-------------|------------|
 | macOS | Apple Silicon (M1/M2/M3/M4) | `zeta4g-pro-<version>-darwin-aarch64.tar.gz` |
 | Linux | x86_64 (AMD/Intel) | `zeta4g-pro-<version>-linux-x86_64.tar.gz` |
+| Linux | aarch64 (ARM/Graviton) | `zeta4g-pro-<version>-linux-aarch64.tar.gz` |
 
 ## Docker
 
@@ -48,12 +49,19 @@ docker compose up -d
 
 ```bash
 # macOS (Apple Silicon)
-curl -LO https://github.com/zeta9044/zeta4g-pro/releases/latest/download/zeta4g-pro-darwin-aarch64.tar.gz
+VERSION=$(curl -fsSL https://api.github.com/repos/zeta9044/zeta4g-pro/releases/latest | sed -n 's/.*"tag_name": "v\([^"]*\)".*/\1/p')
+curl -LO "https://github.com/zeta9044/zeta4g-pro/releases/download/v${VERSION}/zeta4g-pro-${VERSION}-darwin-aarch64.tar.gz"
 tar xzf zeta4g-pro-*-darwin-aarch64.tar.gz
 
 # Linux (x86_64)
-curl -LO https://github.com/zeta9044/zeta4g-pro/releases/latest/download/zeta4g-pro-linux-x86_64.tar.gz
+VERSION=$(curl -fsSL https://api.github.com/repos/zeta9044/zeta4g-pro/releases/latest | sed -n 's/.*"tag_name": "v\([^"]*\)".*/\1/p')
+curl -LO "https://github.com/zeta9044/zeta4g-pro/releases/download/v${VERSION}/zeta4g-pro-${VERSION}-linux-x86_64.tar.gz"
 tar xzf zeta4g-pro-*-linux-x86_64.tar.gz
+
+# Linux (aarch64 / ARM)
+VERSION=$(curl -fsSL https://api.github.com/repos/zeta9044/zeta4g-pro/releases/latest | sed -n 's/.*"tag_name": "v\([^"]*\)".*/\1/p')
+curl -LO "https://github.com/zeta9044/zeta4g-pro/releases/download/v${VERSION}/zeta4g-pro-${VERSION}-linux-aarch64.tar.gz"
+tar xzf zeta4g-pro-*-linux-aarch64.tar.gz
 ```
 
 ```bash
@@ -187,7 +195,13 @@ cd zeta4g-pro-*
 
 ## License
 
-Proprietary. All rights reserved.
+Zeta4G Pro는 개인 사용, 평가, 개발, 내부 업무, 자체 운영 환경에서 무료로
+다운로드하고 사용할 수 있습니다. 소스 코드는 비공개이며 오픈소스가 아닙니다.
+
+Zeta4G Pro를 사용해 제3자에게 호스팅형, 관리형, SaaS 형태의 서비스를 제공할
+수 없습니다. 여기에는 database-as-a-service, 그래프 데이터베이스 호스팅,
+RAG/GraphRAG API 호스팅이 포함됩니다. 전체 조건은 [LICENSE](LICENSE)를
+확인하세요.
 
 ---
 

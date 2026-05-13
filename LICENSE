@@ -1,0 +1,55 @@
+Zeta4G Pro Free Use License
+
+Copyright (c) Zeta4Lab. All rights reserved.
+
+This license applies to the Zeta4G Pro Edition binaries, container images,
+documentation, and release artifacts published by Zeta4Lab through this
+repository or official container registries. The source code is not included
+and is not licensed under an open source license.
+
+1. Free Permitted Use
+
+You may download, install, and run Zeta4G Pro free of charge for personal use,
+evaluation, research, development, and internal business operations. You may
+use Zeta4G Pro in production for your own organization without paying a license
+fee, subject to the restrictions below.
+
+2. SaaS and Hosted-Service Restriction
+
+You may not use Zeta4G Pro to provide a hosted, managed, or
+software-as-a-service offering to third parties. This includes, but is not
+limited to, database-as-a-service, graph database hosting, RAG/GraphRAG API
+hosting, multi-tenant analytics services, platform services, managed service
+provider offerings, or any service where third parties primarily access Zeta4G
+Pro functionality through your hosted system.
+
+3. Redistribution and Modification Restrictions
+
+You may not sell, sublicense, redistribute, rent, lease, or provide Zeta4G Pro
+as a standalone product or service without prior written permission from
+Zeta4Lab. You may not reverse engineer, decompile, disassemble, modify, or
+create derivative works from the binaries except where such restriction is
+prohibited by applicable law.
+
+4. Ownership
+
+Zeta4Lab retains all rights, title, and interest in Zeta4G Pro, including all
+intellectual property rights. No ownership rights are transferred by this
+license.
+
+5. Warranty Disclaimer
+
+Zeta4G Pro is provided "as is" without warranties of any kind, express or
+implied, including warranties of merchantability, fitness for a particular
+purpose, and non-infringement.
+
+6. Limitation of Liability
+
+To the maximum extent permitted by law, Zeta4Lab is not liable for any indirect,
+incidental, special, consequential, or punitive damages, or for loss of profits,
+data, or business interruption arising from use of Zeta4G Pro.
+
+7. Contact
+
+For commercial licensing, SaaS/hosted-service permission, redistribution
+permission, or other questions, contact zeta4lab@gmail.com.
